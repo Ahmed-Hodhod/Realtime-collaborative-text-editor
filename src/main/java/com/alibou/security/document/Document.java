@@ -1,42 +1,42 @@
 package com.alibou.security.document;
 
+import lombok.Builder;
+import lombok.Data;
+
+import lombok.NoArgsConstructor;
+
+import com.alibou.security.user.User;
 
 import jakarta.persistence.*;
 
+@Data
 @Entity
+
 @Table(name = "document")
 public class Document {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
-    private long id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    // Manager the relationship between the document and the owner
+    @ManyToOne
+    @JoinColumn(name = "owner_id")
+    private User owner;
 
     @Column(name = "title")
     private String title;
 
-    @Column(name = "ownerID")
-    private long ownerID;
+    public Document(String title) {
+        this.title = title;
+    }
+
     public Document() {
     }
-    public Document(String title, long ownerID) {
-        this.title = title;
-        this.ownerID = ownerID;
-    }
 
-    public long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public Long getOwnerID() {
-        return ownerID;
-    }
-
-
-    public void setTitle(String title) {
+    // create a new document
+    public Document(User owner, String title) {
+        this.owner = owner;
         this.title = title;
     }
 

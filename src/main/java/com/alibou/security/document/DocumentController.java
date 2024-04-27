@@ -2,8 +2,10 @@ package com.alibou.security.document;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import org.hibernate.cfg.Environment;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -18,9 +20,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.RequestBody;
+
+import com.alibou.security.user.User;
+import com.alibou.security.user.UserRepository;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.security.Keys;
+
+import org.springframework.beans.factory.annotation.Value;
 
 import jakarta.servlet.http.HttpServletRequest;
+import java.security.Key;
 
 @CrossOrigin(origins = "http://localhost:8082")
 
@@ -31,36 +42,116 @@ public class DocumentController {
     @Autowired
     DocumentRepository documentRepository;
 
+    @Autowired
+    UserRepository userRepository;
+
+    @Value("${application.security.jwt.secret-key}")
+    private String secret;
+
     @PostMapping("/documents")
     public ResponseEntity<Document> createDocument(HttpServletRequest request) {
         try {
+            String authorizationHeader = request.getHeader("Authorization");
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
 
-            // Log request headers
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+            String email = (String) claims.get("sub");
+            Optional<User> userOptional = userRepository.findByEmail(email);
 
-            System.out.println(request);
+            User user = userOptional.get();
 
-            /////////////
+            Document newDocument = new Document(user, "New Document");
+            Document doc = documentRepository.save(newDocument);
 
-            // show the request body in the console
+            user.addDocument(doc);
+            user = userRepository.save(user);
 
-            return new ResponseEntity<>(null, HttpStatus.CREATED);
+            System.out.println(userOptional.get().getDocuments());
+            return new ResponseEntity<>(HttpStatus.CREATED);
+
         } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            System.out.println("Finally Block.");
         }
     }
-    
-    @GetMapping("/documents/{id}")
-    public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id) {
-        System.out.println("Before.");
-        Optional<Document> documentData = documentRepository.findById(id);
-        System.out.println("After.");
 
-        if (documentData.isPresent()) {
-            return new ResponseEntity<>(documentData.get(), HttpStatus.OK);
-        } else {
-            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    @GetMapping("/documents")
+    public ResponseEntity<List<Document>> getAllDocuments(HttpServletRequest request) {
+        try {
+            // Log request headers
+            String authorizationHeader = request.getHeader("Authorization");
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+            String email = (String) claims.get("sub");
+            Optional<User> userOptional = userRepository.findByEmail(email);
+
+            User user = userOptional.get();
+            List<Document> documents = user.getDocuments();
+
+            return new ResponseEntity<>(documents, HttpStatus.OK);
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
+
+    @GetMapping("/documents/{id}")
+    public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id, HttpServletRequest request) {
+        try {
+            // Log request headers
+            String authorizationHeader = request.getHeader("Authorization");
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+            String email = (String) claims.get("sub");
+            Optional<User> userOptional = userRepository.findByEmail(email);
+
+            User user = userOptional.get();
+            Optional<Document> documentData = documentRepository.findById(id);
+
+            if (documentData.isPresent()) {
+                Document doc = documentData.get();
+                if (doc.getUser().getId() == user.getId()) {
+                    return new ResponseEntity<>(doc, HttpStatus.OK);
+                } else {
+                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+                }
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+        } catch (Exception e) {
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+    }
+
+    @PutMapping("/documents/{id}")
+    public ResponseEntity<Document> updateDocument(@PathVariable("id") long id, @RequestBody Document document,
+            HttpServletRequest request) {
+        try {
+            // Log request headers
+            String authorizationHeader = request.getHeader("Authorization");
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+            String email = (String)
+}
+    }
+
+    // @GetMapping("/documents/{id}")
+    // public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id)
+    // {
+    // System.out.println("Before.");
+    // Optional<Document> documentData = documentRepository.findById(id);
+    // System.out.println("After.");
+
+    // if (documentData.isPresent()) {
+    // return new ResponseEntity<>(documentData.get(), HttpStatus.OK);
+    // } else {
+    // return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    // }
+    // }
     //
     // @putmapping("/tutorials/{id}")
     // public responseentity<tutorial> updatetutorial(@pathvariable("id") long id,

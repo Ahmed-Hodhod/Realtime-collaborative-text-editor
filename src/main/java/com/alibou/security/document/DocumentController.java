@@ -54,9 +54,11 @@ public class DocumentController {
     private String secret;
 
     @PostMapping("/documents")
-    public ResponseEntity<Document> createDocument(HttpServletRequest request) {
+    public ResponseEntity<Document> createDocument(HttpServletRequest request,
+            @RequestBody NewDocRequest newDocRequest) {
         try {
 
+            // get the currently logged in user
             String authorizationHeader = request.getHeader("Authorization");
 
             String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
@@ -68,7 +70,7 @@ public class DocumentController {
 
             User user = userOptional.get();
 
-            Document newDocument = new Document(user, "New Document");
+            Document newDocument = new Document(user, newDocRequest.getTitle());
             Document doc = documentRepository.save(newDocument);
 
             user.addDocument(doc);

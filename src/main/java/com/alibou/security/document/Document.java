@@ -5,6 +5,10 @@ import lombok.Data;
 
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
+
+import org.springframework.format.annotation.DateTimeFormat;
+
 import com.alibou.security.user.User;
 
 import jakarta.persistence.*;
@@ -24,13 +28,18 @@ public class Document {
     @JoinColumn(name = "owner_id")
     private User owner;
 
-
     @Column(name = "title")
     private String title;
 
     public Document(String title) {
         this.title = title;
     }
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDate createdAt;
+
+    @DateTimeFormat(pattern = "yyyy-MM-dd HH:mm:ss")
+    private LocalDate lastModifiedAt;
 
     public Document() {
     }

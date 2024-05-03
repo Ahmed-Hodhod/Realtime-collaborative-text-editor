@@ -1,9 +1,11 @@
 package com.alibou.security.document;
 
+import org.springframework.format.annotation.DateTimeFormat;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import java.time.LocalDate;
 
 @Data
 @Builder
@@ -11,5 +13,4 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class NewDocRequest {
     private String title;
-    private Long userId;
 }

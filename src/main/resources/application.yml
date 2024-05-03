@@ -4,10 +4,16 @@ spring:
     username: hodhod
     password: hodhod01144
     driver-class-name: com.mysql.cj.jdbc.Driver
+    
+  devtools:
+    restart:
+      enabled: true
+      additional-paths: src/main/java,src/main/resources
+
 
   jpa:
     hibernate:
-      ddl-auto: create
+      ddl-auto: update
     show-sql: false
     properties:
       hibernate:

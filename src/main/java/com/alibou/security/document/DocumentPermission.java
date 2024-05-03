@@ -6,33 +6,37 @@ import com.alibou.security.user.User;
 
 import jakarta.persistence.*;
 
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.JoinColumn;
-import jakarta.persistence.ManyToOne;
-
-import jakarta.persistence.Entity;
-
 @Data
 @Entity
+
+// @Idclass(CompositeKey.class)
+// @Embeddable
 public class DocumentPermission {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @EmbeddedId
+    private CompositeKey id;
 
-    @ManyToOne
-    @JoinColumn(name = "document_id")
-    private Document document;
+    // @ManyToOne
+    // @JoinColumn(referencedColumnName = "id", insertable = false, updatable =
+    // false)
+    private Long user;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id")
-    private User user;
+    // @ManyToOne
+    // @JoinColumn(referencedColumnName = "id", insertable = false, updatable =
+    // false)
+    private long document;
 
     @Enumerated(EnumType.STRING)
     private PermissionType permissionType;
 
-    // Constructors, getters, and setters
+    // public DocumentPermission(User user, Document document, PermissionType
+    // permissionType) {
+    // this.user = user;
+    // // this.document = document;
+    // this.permissionType = permissionType;
+    // // this.id = new CompositeKey(user.getId(), document.getId());
+    // }
+
+    public DocumentPermission() {
+    }
 
 }

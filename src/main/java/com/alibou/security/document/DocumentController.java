@@ -23,6 +23,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.alibou.security.user.User;
 import com.alibou.security.user.UserRepository;
+import com.alibou.security.document.*;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
@@ -30,6 +31,7 @@ import io.jsonwebtoken.security.Keys;
 
 import org.springframework.beans.factory.annotation.Value;
 
+import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 
@@ -45,14 +47,20 @@ public class DocumentController {
     @Autowired
     UserRepository userRepository;
 
+    @Autowired
+    DocumentPermissionRepository dpr;
+
     @Value("${application.security.jwt.secret-key}")
     private String secret;
 
     @PostMapping("/documents")
     public ResponseEntity<Document> createDocument(HttpServletRequest request) {
         try {
+
             String authorizationHeader = request.getHeader("Authorization");
+
             String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+            System.out.println(authorizationHeader);
 
             Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
             String email = (String) claims.get("sub");
@@ -77,128 +85,169 @@ public class DocumentController {
         }
     }
 
-    // @GetMapping("/documents")
-    // public ResponseEntity<List<Document>> getAllDocuments(HttpServletRequest
-    // request) {
-    // try {
-    // // Log request headers
-    // String authorizationHeader = request.getHeader("Authorization");
-    // String token = authorizationHeader.substring(7); // Assuming the token starts
-    // with "Bearer "
+    @PostMapping("/{documentId}/share/{userId}")
+    public ResponseEntity<String> ShareDocument(HttpServletRequest request, @PathVariable Long documentId,
+            @PathVariable Long userId) {
+        try {
 
-    // Claims claims =
-    // Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-    // String email = (String) claims.get("sub");
-    // Optional<User> userOptional = userRepository.findByEmail(email);
+            // get the currently logged in user
+            String authorizationHeader = request.getHeader("Authorization");
 
-    // User user = userOptional.get();
-    // List<Document> documents = user.getDocuments();
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+            System.out.println(authorizationHeader);
 
-    // return new ResponseEntity<>(documents, HttpStatus.OK);
-    // } catch (Exception e) {
-    // return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+            String email = (String) claims.get("sub");
+            Optional<User> userOptional = userRepository.findByEmail(email);
 
-    // @GetMapping("/documents/{id}")
-    // public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id,
-    // HttpServletRequest request) {
-    // try {
-    // // Log request headers
-    // String authorizationHeader = request.getHeader("Authorization");
-    // String token = authorizationHeader.substring(7); // Assuming the token starts
-    // with "Bearer "
+            User user = userOptional.get();
 
-    // Claims claims =
-    // Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-    // String email = (String) claims.get("sub");
-    // Optional<User> userOptional = userRepository.findByEmail(email);
+            ////////
+            DocumentPermission newPermission = new DocumentPermission();
+            newPermission.setDocument(documentId);
+            newPermission.setUser(userId);
+           
 
-    // User user = userOptional.get();
-    // Optional<Document> documentData = documentRepository.findById(id);
+            CompositeKey id = new CompositeKey(documentId, userId);
+            newPermission.setId(id);
+            newPermission.setPermissionType(PermissionType.VIEW);
 
-    // if (documentData.isPresent()) {
-    // Document doc = documentData.get();
-    // if (doc.getUser().getId() == user.getId()) {
-    // return new ResponseEntity<>(doc, HttpStatus.OK);
-    // } else {
-    // return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-    // }
-    // } else {
-    // return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    // }
-    // } catch (Exception e) {
-    // return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-    // }
-    // }
+            dpr.save(newPermission);
 
-    // @PutMapping("/documents/{id}")
-    // public ResponseEntity<Document> updateDocument(@PathVariable("id") long id,
-    // @RequestBody Document document,
-    // HttpServletRequest request) {
-    // try {
-    // // Log request headers
-    // String authorizationHeader = request.getHeader("Authorization");
-    // String token = authorizationHeader.substring(7); // Assuming the token starts
-    // with "Bearer "
+            System.out.println("Document shared successfully with user");
+            return ResponseEntity.ok("Document shared successfully with user");
 
-    // Claims claims =
-    // Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-    // String email = (String)
-    // }
-    // }
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
 
-    // @GetMapping("/documents/{id}")
-    // public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id)
-    // {
-    // System.out.println("Before.");
-    // Optional<Document> documentData = documentRepository.findById(id);
-    // System.out.println("After.");
+            System.out.println("Finally Block.");
+        }
 
-    // if (documentData.isPresent()) {
-    // return new ResponseEntity<>(documentData.get(), HttpStatus.OK);
-    // } else {
-    // return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-    // }
-    // }
-    //
-    // @putmapping("/tutorials/{id}")
-    // public responseentity<tutorial> updatetutorial(@pathvariable("id") long id,
-    // @requestbody tutorial tutorial) {
-    // optional<tutorial> tutorialdata = tutorialrepository.findbyid(id);
-    //
-    // if (tutorialdata.ispresent()) {
-    // tutorial _tutorial = tutorialdata.get();
-    // _tutorial.settitle(tutorial.gettitle());
-    // _tutorial.setdescription(tutorial.getdescription());
-    // _tutorial.setpublished(tutorial.ispublished());
-    // return new responseentity<>(tutorialrepository.save(_tutorial),
-    // httpstatus.ok);
-    // } else {
-    // return new responseentity<>(httpstatus.not_found);
-    // }
-    // }
-    //
-    // @deletemapping("/tutorials/{id}")
-    // public responseentity<httpstatus> deletetutorial(@pathvariable("id") long id)
-    // {
-    // try {
-    // tutorialrepository.deletebyid(id);
-    // return new responseentity<>(httpstatus.no_content);
-    // } catch (exception e) {
-    // return new responseentity<>(httpstatus.internal_server_error);
-    // }
-    // }
-
-    // @deletemapping("/tutorials")
-    // public responseentity<httpstatus> deletealltutorials() {
-    // try {
-    // tutorialrepository.deleteall();
-    // return new responseentity<>(httpstatus.no_content);
-    // } catch (exception e) {
-    // return new responseentity<>(httpstatus.internal_server_error);
-    // }
-    //
-    // }
-
+    }
 }
+
+// @GetMapping("/documents")
+// public ResponseEntity<List<Document>> getAllDocuments(HttpServletRequest
+// request) {
+// try {
+// // Log request headers
+// String authorizationHeader = request.getHeader("Authorization");
+// String token = authorizationHeader.substring(7); // Assuming the token starts
+// with "Bearer "
+
+// Claims claims =
+// Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+// String email = (String) claims.get("sub");
+// Optional<User> userOptional = userRepository.findByEmail(email);
+
+// User user = userOptional.get();
+// List<Document> documents = user.getDocuments();
+
+// return new ResponseEntity<>(documents, HttpStatus.OK);
+// } catch (Exception e) {
+// return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+// }
+// }
+
+// @GetMapping("/documents/{id}")
+// public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id,
+// HttpServletRequest request) {
+// try {
+// // Log request headers
+// String authorizationHeader = request.getHeader("Authorization");
+// String token = authorizationHeader.substring(7); // Assuming the token starts
+// with "Bearer "
+
+// Claims claims =
+// Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+// String email = (String) claims.get("sub");
+// Optional<User> userOptional = userRepository.findByEmail(email);
+
+// User user = userOptional.get();
+// Optional<Document> documentData = documentRepository.findById(id);
+
+// if (documentData.isPresent()) {
+// Document doc = documentData.get();
+// if (doc.getUser().getId() == user.getId()) {
+// return new ResponseEntity<>(doc, HttpStatus.OK);
+// } else {
+// return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+// }
+// } else {
+// return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+// }
+// } catch (Exception e) {
+// return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+// }
+// }
+
+// @PutMapping("/documents/{id}")
+// public ResponseEntity<Document> updateDocument(@PathVariable("id") long id,
+// @RequestBody Document document,
+// HttpServletRequest request) {
+// try {
+// // Log request headers
+// String authorizationHeader = request.getHeader("Authorization");
+// String token = authorizationHeader.substring(7); // Assuming the token starts
+// with "Bearer "
+
+// Claims claims =
+// Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+// String email = (String)
+// }
+// }
+
+// @GetMapping("/documents/{id}")
+// public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id)
+// {
+// System.out.println("Before.");
+// Optional<Document> documentData = documentRepository.findById(id);
+// System.out.println("After.");
+
+// if (documentData.isPresent()) {
+// return new ResponseEntity<>(documentData.get(), HttpStatus.OK);
+// } else {
+// return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+// }
+// }
+//
+// @putmapping("/tutorials/{id}")
+// public responseentity<tutorial> updatetutorial(@pathvariable("id") long id,
+// @requestbody tutorial tutorial) {
+// optional<tutorial> tutorialdata = tutorialrepository.findbyid(id);
+//
+// if (tutorialdata.ispresent()) {
+// tutorial _tutorial = tutorialdata.get();
+// _tutorial.settitle(tutorial.gettitle());
+// _tutorial.setdescription(tutorial.getdescription());
+// _tutorial.setpublished(tutorial.ispublished());
+// return new responseentity<>(tutorialrepository.save(_tutorial),
+// httpstatus.ok);
+// } else {
+// return new responseentity<>(httpstatus.not_found);
+// }
+// }
+//
+// @deletemapping("/tutorials/{id}")
+// public responseentity<httpstatus> deletetutorial(@pathvariable("id") long id)
+// {
+// try {
+// tutorialrepository.deletebyid(id);
+// return new responseentity<>(httpstatus.no_content);
+// } catch (exception e) {
+// return new responseentity<>(httpstatus.internal_server_error);
+// }
+// }
+
+// @deletemapping("/tutorials")
+// public responseentity<httpstatus> deletealltutorials() {
+// try {
+// tutorialrepository.deleteall();
+// return new responseentity<>(httpstatus.no_content);
+// } catch (exception e) {
+// return new responseentity<>(httpstatus.internal_server_error);
+// }
+//
+// }

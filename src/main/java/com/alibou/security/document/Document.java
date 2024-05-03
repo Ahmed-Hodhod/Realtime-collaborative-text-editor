@@ -24,6 +24,7 @@ public class Document {
     @JoinColumn(name = "owner_id")
     private User owner;
 
+
     @Column(name = "title")
     private String title;
 

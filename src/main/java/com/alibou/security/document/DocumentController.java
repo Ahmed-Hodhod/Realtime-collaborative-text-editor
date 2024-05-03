@@ -85,10 +85,13 @@ public class DocumentController {
         }
     }
 
-    @PostMapping("/{documentId}/share/{userId}")
-    public ResponseEntity<String> ShareDocument(HttpServletRequest request, @PathVariable Long documentId,
-            @PathVariable Long userId) {
+    @PostMapping("/document/{documentId}/share")
+    public ResponseEntity<String> ShareDocument(HttpServletRequest request, @RequestBody ShareRequest shareRequest,
+            @PathVariable Long documentId) {
         try {
+
+            Long userId = shareRequest.getUserId();
+            PermissionType permissionType = PermissionType.valueOf(shareRequest.getPermissionType());
 
             // get the currently logged in user
             String authorizationHeader = request.getHeader("Authorization");
@@ -102,20 +105,55 @@ public class DocumentController {
 
             User user = userOptional.get();
 
-            ////////
+            // check the validity of both the document and the user you are sharing with
+            Optional<User> sharingWithUserOptional = userRepository.findById(userId);
+            Optional<Document> documentOptional = documentRepository.findById(documentId);
+
+            if (!sharingWithUserOptional.isPresent() || !documentOptional.isPresent()) {
+                return new ResponseEntity<>(
+                        "Invalid user or document. Make sure to share a valid document with an existing user. ",
+                        HttpStatus.BAD_REQUEST);
+            }
+
+            User sharingWithUser = sharingWithUserOptional.get();
+            Document document = documentOptional.get();
+
+            // check if the user is the owner of the document
+            if (document.getOwner().getId() != user.getId()) {
+                return new ResponseEntity<>("You are not the owner of this document.", HttpStatus.FORBIDDEN);
+            }
+
+            // check if the user is sharing with theirself
+            if (user.getId() == sharingWithUser.getId()) {
+                return new ResponseEntity<>("You can't share this document with yourself.", HttpStatus.FORBIDDEN);
+            }
+
+            // check if the permission entry already exists and in this case update it only
+            Optional<DocumentPermission> permissionOptional = dpr.findById(new CompositeKey(documentId, userId));
+
+            if (permissionOptional.isPresent()) {
+                DocumentPermission permission = permissionOptional.get();
+                if (permission.getPermissionType() == permissionType) {
+                    return ResponseEntity.ok("This user already has this permission on this document.");
+                }
+
+                permission.setPermissionType(permissionType);
+                dpr.save(permission);
+                return ResponseEntity.ok("Permission updated successfully.");
+            }
+
+            // create a new permission entry and save it
             DocumentPermission newPermission = new DocumentPermission();
             newPermission.setDocument(documentId);
             newPermission.setUser(userId);
-           
 
             CompositeKey id = new CompositeKey(documentId, userId);
             newPermission.setId(id);
-            newPermission.setPermissionType(PermissionType.VIEW);
+            newPermission.setPermissionType(permissionType);
 
             dpr.save(newPermission);
 
-            System.out.println("Document shared successfully with user");
-            return ResponseEntity.ok("Document shared successfully with user");
+            return ResponseEntity.ok("Document shared successfully with the user");
 
         } catch (Exception e) {
             System.out.println(e.getMessage());

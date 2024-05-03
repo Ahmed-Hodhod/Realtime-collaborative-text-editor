@@ -77,67 +77,76 @@ public class DocumentController {
         }
     }
 
-    @GetMapping("/documents")
-    public ResponseEntity<List<Document>> getAllDocuments(HttpServletRequest request) {
-        try {
-            // Log request headers
-            String authorizationHeader = request.getHeader("Authorization");
-            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+    // @GetMapping("/documents")
+    // public ResponseEntity<List<Document>> getAllDocuments(HttpServletRequest
+    // request) {
+    // try {
+    // // Log request headers
+    // String authorizationHeader = request.getHeader("Authorization");
+    // String token = authorizationHeader.substring(7); // Assuming the token starts
+    // with "Bearer "
 
-            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-            String email = (String) claims.get("sub");
-            Optional<User> userOptional = userRepository.findByEmail(email);
+    // Claims claims =
+    // Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+    // String email = (String) claims.get("sub");
+    // Optional<User> userOptional = userRepository.findByEmail(email);
 
-            User user = userOptional.get();
-            List<Document> documents = user.getDocuments();
+    // User user = userOptional.get();
+    // List<Document> documents = user.getDocuments();
 
-            return new ResponseEntity<>(documents, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    // return new ResponseEntity<>(documents, HttpStatus.OK);
+    // } catch (Exception e) {
+    // return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    // }
+    // }
 
-    @GetMapping("/documents/{id}")
-    public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id, HttpServletRequest request) {
-        try {
-            // Log request headers
-            String authorizationHeader = request.getHeader("Authorization");
-            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+    // @GetMapping("/documents/{id}")
+    // public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id,
+    // HttpServletRequest request) {
+    // try {
+    // // Log request headers
+    // String authorizationHeader = request.getHeader("Authorization");
+    // String token = authorizationHeader.substring(7); // Assuming the token starts
+    // with "Bearer "
 
-            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-            String email = (String) claims.get("sub");
-            Optional<User> userOptional = userRepository.findByEmail(email);
+    // Claims claims =
+    // Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+    // String email = (String) claims.get("sub");
+    // Optional<User> userOptional = userRepository.findByEmail(email);
 
-            User user = userOptional.get();
-            Optional<Document> documentData = documentRepository.findById(id);
+    // User user = userOptional.get();
+    // Optional<Document> documentData = documentRepository.findById(id);
 
-            if (documentData.isPresent()) {
-                Document doc = documentData.get();
-                if (doc.getUser().getId() == user.getId()) {
-                    return new ResponseEntity<>(doc, HttpStatus.OK);
-                } else {
-                    return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-                }
-            } else {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-        } catch (Exception e) {
-            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-    }
+    // if (documentData.isPresent()) {
+    // Document doc = documentData.get();
+    // if (doc.getUser().getId() == user.getId()) {
+    // return new ResponseEntity<>(doc, HttpStatus.OK);
+    // } else {
+    // return new ResponseEntity<>(HttpStatus.FORBIDDEN);
+    // }
+    // } else {
+    // return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+    // }
+    // } catch (Exception e) {
+    // return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+    // }
+    // }
 
-    @PutMapping("/documents/{id}")
-    public ResponseEntity<Document> updateDocument(@PathVariable("id") long id, @RequestBody Document document,
-            HttpServletRequest request) {
-        try {
-            // Log request headers
-            String authorizationHeader = request.getHeader("Authorization");
-            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+    // @PutMapping("/documents/{id}")
+    // public ResponseEntity<Document> updateDocument(@PathVariable("id") long id,
+    // @RequestBody Document document,
+    // HttpServletRequest request) {
+    // try {
+    // // Log request headers
+    // String authorizationHeader = request.getHeader("Authorization");
+    // String token = authorizationHeader.substring(7); // Assuming the token starts
+    // with "Bearer "
 
-            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-            String email = (String)
-}
-    }
+    // Claims claims =
+    // Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+    // String email = (String)
+    // }
+    // }
 
     // @GetMapping("/documents/{id}")
     // public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id)

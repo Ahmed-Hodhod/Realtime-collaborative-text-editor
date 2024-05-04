@@ -166,128 +166,55 @@ public class DocumentController {
         }
 
     }
+
+    // get all documents of the currently logged in user whether they are the owner
+    // or they have been shared with
+
+    // This was the error: jakarta.servlet.ServletException: Unable to handle the
+    // Spring Security Exception because the response is already committed.
+    @GetMapping("/user/documents")
+    public ResponseEntity<List<Document>> getDocuments(HttpServletRequest request) {
+        try {
+
+            // get the currently logged in user
+            String authorizationHeader = request.getHeader("Authorization");
+
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+            System.out.println(authorizationHeader);
+
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+            String email = (String) claims.get("sub");
+            Optional<User> userOptional = userRepository.findByEmail(email);
+
+            if (!userOptional.isPresent()) {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+            User user = userOptional.get();
+
+            List<Document> documents = user.getDocuments();
+
+            return new ResponseEntity<>(documents, HttpStatus.OK);
+
+            // // get all the documents that have been shared with the user
+            // List<DocumentPermission> permissions = dpr.findByUser(user.getId());
+
+            // for (DocumentPermission permission : permissions) {
+            // Document document =
+            // documentRepository.findById(permission.getDocument()).get();
+            // documents.add(document);
+            // }
+
+            // System.out.println(documents);
+
+            // return new ResponseEntity<>(documents, HttpStatus.OK);
+
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            System.out.println("Finally Block.");
+        }
+    }
+
 }
-
-// @GetMapping("/documents")
-// public ResponseEntity<List<Document>> getAllDocuments(HttpServletRequest
-// request) {
-// try {
-// // Log request headers
-// String authorizationHeader = request.getHeader("Authorization");
-// String token = authorizationHeader.substring(7); // Assuming the token starts
-// with "Bearer "
-
-// Claims claims =
-// Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-// String email = (String) claims.get("sub");
-// Optional<User> userOptional = userRepository.findByEmail(email);
-
-// User user = userOptional.get();
-// List<Document> documents = user.getDocuments();
-
-// return new ResponseEntity<>(documents, HttpStatus.OK);
-// } catch (Exception e) {
-// return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-// }
-// }
-
-// @GetMapping("/documents/{id}")
-// public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id,
-// HttpServletRequest request) {
-// try {
-// // Log request headers
-// String authorizationHeader = request.getHeader("Authorization");
-// String token = authorizationHeader.substring(7); // Assuming the token starts
-// with "Bearer "
-
-// Claims claims =
-// Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-// String email = (String) claims.get("sub");
-// Optional<User> userOptional = userRepository.findByEmail(email);
-
-// User user = userOptional.get();
-// Optional<Document> documentData = documentRepository.findById(id);
-
-// if (documentData.isPresent()) {
-// Document doc = documentData.get();
-// if (doc.getUser().getId() == user.getId()) {
-// return new ResponseEntity<>(doc, HttpStatus.OK);
-// } else {
-// return new ResponseEntity<>(HttpStatus.FORBIDDEN);
-// }
-// } else {
-// return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-// }
-// } catch (Exception e) {
-// return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
-// }
-// }
-
-// @PutMapping("/documents/{id}")
-// public ResponseEntity<Document> updateDocument(@PathVariable("id") long id,
-// @RequestBody Document document,
-// HttpServletRequest request) {
-// try {
-// // Log request headers
-// String authorizationHeader = request.getHeader("Authorization");
-// String token = authorizationHeader.substring(7); // Assuming the token starts
-// with "Bearer "
-
-// Claims claims =
-// Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
-// String email = (String)
-// }
-// }
-
-// @GetMapping("/documents/{id}")
-// public ResponseEntity<Document> getDocumentById(@PathVariable("id") long id)
-// {
-// System.out.println("Before.");
-// Optional<Document> documentData = documentRepository.findById(id);
-// System.out.println("After.");
-
-// if (documentData.isPresent()) {
-// return new ResponseEntity<>(documentData.get(), HttpStatus.OK);
-// } else {
-// return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-// }
-// }
-//
-// @putmapping("/tutorials/{id}")
-// public responseentity<tutorial> updatetutorial(@pathvariable("id") long id,
-// @requestbody tutorial tutorial) {
-// optional<tutorial> tutorialdata = tutorialrepository.findbyid(id);
-//
-// if (tutorialdata.ispresent()) {
-// tutorial _tutorial = tutorialdata.get();
-// _tutorial.settitle(tutorial.gettitle());
-// _tutorial.setdescription(tutorial.getdescription());
-// _tutorial.setpublished(tutorial.ispublished());
-// return new responseentity<>(tutorialrepository.save(_tutorial),
-// httpstatus.ok);
-// } else {
-// return new responseentity<>(httpstatus.not_found);
-// }
-// }
-//
-// @deletemapping("/tutorials/{id}")
-// public responseentity<httpstatus> deletetutorial(@pathvariable("id") long id)
-// {
-// try {
-// tutorialrepository.deletebyid(id);
-// return new responseentity<>(httpstatus.no_content);
-// } catch (exception e) {
-// return new responseentity<>(httpstatus.internal_server_error);
-// }
-// }
-
-// @deletemapping("/tutorials")
-// public responseentity<httpstatus> deletealltutorials() {
-// try {
-// tutorialrepository.deleteall();
-// return new responseentity<>(httpstatus.no_content);
-// } catch (exception e) {
-// return new responseentity<>(httpstatus.internal_server_error);
-// }
-//
-// }

@@ -25,8 +25,6 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibou.security.user.User;
 import com.alibou.security.user.UserRepository;
 import com.alibou.security.document.*;
-import com.alibou.security.document.DocumentResponse.UserData;
-
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -39,9 +37,10 @@ import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 
-//@CrossOrigin(origins = "http://localhost:8082")
 
 @RestController
+@CrossOrigin(origins = "http://localhost:3000")
+
 @RequestMapping("/api")
 public class DocumentController {
 
@@ -56,6 +55,7 @@ public class DocumentController {
 
     @Value("${application.security.jwt.secret-key}")
     private String secret;
+    @CrossOrigin(origins = "http://localhost:3000")
 
     @PostMapping("/documents")
     public ResponseEntity<Document> createDocument(HttpServletRequest request,

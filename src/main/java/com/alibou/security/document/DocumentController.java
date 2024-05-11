@@ -190,15 +190,35 @@ public class DocumentController {
 
             User user = userOptional.get();
 
-            // Document newDocument = new Document(user, "Title 1");
-            // List<Document> documents = new ArrayList<>();
-            // documents.add(new Document(user, "welcome"));
             List<DocumentResponse> objects = new ArrayList<>();
+            List<DocumentPermission> shared_docs = dpr.findByUser(user.getId());
+            // get the shared list of documents
 
-            // Populate the list with MyObject instances
-            for (Document document : user.getDocuments()) {
-                objects.add(new DocumentResponse(user.getId(), document.getTitle()));
+            for (DocumentPermission document : shared_docs) {
+                Document doc = documentRepository.findById(document.getDocument()).get();
+                System.out.println("Document: " + doc.getTitle() + " Permission: " + document.getPermissionType() +
+                        " User: " + document.getUser());
+
+                objects.add(new DocumentResponse(document.getDocument(), document.getUser(), doc.getTitle(),
+                        document.getPermissionType()));
             }
+
+            for (Document document : user.getDocuments()) {
+
+                PermissionType permission = null;
+                if (document.getOwner().getId() == user.getId()) {
+                    permission = PermissionType.OWNER;
+                } else {
+                    Optional<DocumentPermission> permissionOptional = dpr
+                            .findById(new CompositeKey(document.getId(), user.getId()));
+                    permission = permissionOptional.get().getPermissionType();
+                }
+
+                System.out.println("Permission: " + permission);
+
+                objects.add(new DocumentResponse(document.getId(), user.getId(), document.getTitle(), permission));
+            }
+
             return new ResponseEntity<>(objects, HttpStatus.OK);
 
         } catch (JwtException e) {
@@ -219,11 +239,21 @@ class DocumentResponse {
     private String title;
     private PermissionType permissionType;
     private Long ownerId;
+    private long docId;
 
-    public DocumentResponse(Long ownerId, String title) {
+    public DocumentResponse(long docId, Long ownerId, String title, PermissionType permissionType) {
         this.title = title;
-        // this.permissionType = permissionType;
+        this.permissionType = permissionType;
         this.ownerId = ownerId;
+        this.docId = docId;
+    }
+
+    public PermissionType getPermissionType() {
+        return permissionType;
+    }
+
+    public void setPermissionType(PermissionType permissionType) {
+        this.permissionType = permissionType;
     }
 
     public Long getOwnerId() {
@@ -240,5 +270,13 @@ class DocumentResponse {
 
     public void setTitle(String title) {
         this.title = title;
+    }
+
+    public long getDocId() {
+        return docId;
+    }
+
+    public void setDocId(long docId) {
+        this.docId = docId;
     }
 }

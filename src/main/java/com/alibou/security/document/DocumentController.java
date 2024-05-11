@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.alibou.security.user.User;
 import com.alibou.security.user.UserRepository;
 import com.alibou.security.document.*;
+import com.alibou.security.document.DocumentResponse.UserData;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
@@ -314,6 +315,8 @@ public class DocumentController {
                         Document doc = documentRepository.findById(document.getDocument()).get();
 
                         doc.setTitle(renamRequest.getTitle());
+                        documentRepository.save(doc);
+
                         System.out.println(doc.getTitle());
 
                         resultDoc = new DocumentResponse(document.getDocument(), document.getUser(),
@@ -330,6 +333,7 @@ public class DocumentController {
 
                 if (documentId == document.getId()) {
                     document.setTitle(renamRequest.getTitle());
+                    documentRepository.save(document);
                     System.out.println(renamRequest.getTitle());
                     resultDoc = new DocumentResponse(document.getId(), user.getId(), renamRequest.getTitle(),
                             PermissionType.OWNER);
@@ -391,12 +395,51 @@ public class DocumentController {
         }
     }
 
+    @PostMapping("/user")
+    public ResponseEntity<UserData> GetUserInformation(HttpServletRequest request,
+            @RequestBody GetUserRequest getUserRequest) {
+        try {
+
+            // get the currently logged in user
+            String authorizationHeader = request.getHeader("Authorization");
+
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+            System.out.println(authorizationHeader);
+
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+
+            // find by email
+            if (getUserRequest.getUserEmail() != null) {
+                User user = userRepository.findByEmail(getUserRequest.getUserEmail()).get();
+
+                return new ResponseEntity<>(
+                        new UserData(user.getFirstname(), user.getLastname(), user.getEmail(), user.getId()),
+                        HttpStatus.OK);
+            }
+
+            // find by ID
+            if (getUserRequest.getUserId() != null) {
+                User user = userRepository.findById(getUserRequest.getUserId()).get();
+
+                return new ResponseEntity<>(
+                        new UserData(user.getFirstname(), user.getLastname(), user.getEmail(), user.getId()),
+                        HttpStatus.OK);
+            }
+
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+        } catch (JwtException e) {
+            System.out.println("JWT Exception: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            System.out.println("Internal Server Error: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            System.out.println("Finally Block.");
+        }
+    }
+
 }
-
-// list all users in the system
-
-// list users in the system with their ids and emails
-// delete a document
 
 // Define a simple class representing your object
 class DocumentResponse {
@@ -442,5 +485,52 @@ class DocumentResponse {
 
     public void setDocId(long docId) {
         this.docId = docId;
+    }
+
+}
+
+class UserData {
+    private String firstname;
+    private String lastname;
+    private String email;
+    private Long id;
+
+    public UserData(String firstname, String lastname, String email, Long id) {
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.email = email;
+        this.id = id;
+    }
+
+    public String getFirstName() {
+        return firstname;
+    }
+
+    public String getLastName() {
+        return lastname;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public void setFirstName(String firstname) {
+        this.firstname = firstname;
+    }
+
+    public void setLastName(String lastname) {
+        this.lastname = lastname;
     }
 }

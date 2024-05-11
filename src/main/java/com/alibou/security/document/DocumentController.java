@@ -286,12 +286,116 @@ public class DocumentController {
             System.out.println("Finally Block.");
         }
     }
+
+    @PutMapping("/documents/{documentId}")
+    public ResponseEntity<DocumentResponse> RenameDocument(HttpServletRequest request, @PathVariable Long documentId,
+            @RequestBody RenameRequest renamRequest) {
+        try {
+
+            // get the currently logged in user
+            String authorizationHeader = request.getHeader("Authorization");
+
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+            System.out.println(authorizationHeader);
+
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+            String email = (String) claims.get("sub");
+            Optional<User> userOptional = userRepository.findByEmail(email);
+
+            User user = userOptional.get();
+
+            DocumentResponse resultDoc = null;
+
+            // find the document in the list of shared documents
+            List<DocumentPermission> shared_docs = dpr.findByUser(user.getId());
+            for (DocumentPermission document : shared_docs) {
+                if (document.getDocument() == documentId) {
+                    if (document.getPermissionType() == PermissionType.EDIT) {
+                        Document doc = documentRepository.findById(document.getDocument()).get();
+
+                        doc.setTitle(renamRequest.getTitle());
+                        System.out.println(doc.getTitle());
+
+                        resultDoc = new DocumentResponse(document.getDocument(), document.getUser(),
+                                renamRequest.getTitle(),
+                                document.getPermissionType());
+                    } else {
+                        return new ResponseEntity<>(HttpStatus.METHOD_NOT_ALLOWED);
+                    }
+                }
+            }
+
+            // find the document in the owned documents
+            for (Document document : user.getDocuments()) {
+
+                if (documentId == document.getId()) {
+                    document.setTitle(renamRequest.getTitle());
+                    System.out.println(renamRequest.getTitle());
+                    resultDoc = new DocumentResponse(document.getId(), user.getId(), renamRequest.getTitle(),
+                            PermissionType.OWNER);
+                }
+
+            }
+            if (resultDoc != null) {
+                return new ResponseEntity<>(resultDoc, HttpStatus.OK);
+            } else {
+                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+            }
+
+        } catch (JwtException e) {
+            System.out.println("JWT Exception: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            System.out.println("Internal Server Error: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            System.out.println("Finally Block.");
+        }
+    }
+
+    @DeleteMapping("/documents/{documentId}")
+    public ResponseEntity<String> RenameDocument(HttpServletRequest request, @PathVariable Long documentId) {
+        try {
+
+            // get the currently logged in user
+            String authorizationHeader = request.getHeader("Authorization");
+
+            String token = authorizationHeader.substring(7); // Assuming the token starts with "Bearer "
+            System.out.println(authorizationHeader);
+
+            Claims claims = Jwts.parserBuilder().setSigningKey(secret).build().parseClaimsJws(token).getBody();
+            String email = (String) claims.get("sub");
+            Optional<User> userOptional = userRepository.findByEmail(email);
+
+            User user = userOptional.get();
+
+            // delete the document only if you are the owner
+            for (Document document : user.getDocuments()) {
+
+                if (documentId == document.getId()) {
+                    documentRepository.delete(document);
+                    return new ResponseEntity<>("Deleted Succesfully!", HttpStatus.OK);
+                }
+
+            }
+            return new ResponseEntity<>(HttpStatus.NOT_ACCEPTABLE);
+
+        } catch (JwtException e) {
+            System.out.println("JWT Exception: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
+        } catch (Exception e) {
+            System.out.println("Internal Server Error: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+        } finally {
+            System.out.println("Finally Block.");
+        }
+    }
+
 }
 
 // list all users in the system
 
 // list users in the system with their ids and emails
-// rename a document
 // delete a document
 
 // Define a simple class representing your object

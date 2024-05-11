@@ -41,6 +41,10 @@ public class User implements UserDetails {
   @OneToMany(mappedBy = "owner")
   private List<Document> documents;
 
+  final public List<Document> getDocuments() {
+    return documents;
+  }
+
   // create a function to add a new document to the list of dcouments
 
   public void addDocument(Document document) {

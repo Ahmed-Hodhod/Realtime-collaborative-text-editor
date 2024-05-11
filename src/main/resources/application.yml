@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:mysql://34.203.195.22:3306/apt
+    url: jdbc:mysql://54.85.57.207:3306/hodhod
     username: hodhod
     password: hodhod01144
     driver-class-name: com.mysql.cj.jdbc.Driver

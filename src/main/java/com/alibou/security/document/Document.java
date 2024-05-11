@@ -15,7 +15,6 @@ import jakarta.persistence.*;
 
 @Data
 @Entity
-
 @Table(name = "document")
 public class Document {
 
@@ -43,6 +42,8 @@ public class Document {
 
     public Document() {
     }
+
+    
 
     // create a new document
     public Document(User owner, String title) {

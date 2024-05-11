@@ -1,6 +1,7 @@
 package com.alibou.security.document;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -26,6 +27,7 @@ import com.alibou.security.user.UserRepository;
 import com.alibou.security.document.*;
 
 import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
 
@@ -35,7 +37,7 @@ import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 
-@CrossOrigin(origins = "http://localhost:8082")
+//@CrossOrigin(origins = "http://localhost:8082")
 
 @RestController
 @RequestMapping("/api")
@@ -172,8 +174,8 @@ public class DocumentController {
 
     // This was the error: jakarta.servlet.ServletException: Unable to handle the
     // Spring Security Exception because the response is already committed.
-    @GetMapping("/user/documents")
-    public ResponseEntity<List<Document>> getDocuments(HttpServletRequest request) {
+    @GetMapping("/documents")
+    public ResponseEntity<List<DocumentResponse>> getDocuments(HttpServletRequest request) {
         try {
 
             // get the currently logged in user
@@ -186,35 +188,57 @@ public class DocumentController {
             String email = (String) claims.get("sub");
             Optional<User> userOptional = userRepository.findByEmail(email);
 
-            if (!userOptional.isPresent()) {
-                return new ResponseEntity<>(HttpStatus.NOT_FOUND);
-            }
-
             User user = userOptional.get();
 
-            List<Document> documents = user.getDocuments();
+            // Document newDocument = new Document(user, "Title 1");
+            // List<Document> documents = new ArrayList<>();
+            // documents.add(new Document(user, "welcome"));
+            List<DocumentResponse> objects = new ArrayList<>();
 
-            return new ResponseEntity<>(documents, HttpStatus.OK);
+            // Populate the list with MyObject instances
+            for (Document document : user.getDocuments()) {
+                objects.add(new DocumentResponse(user.getId(), document.getTitle()));
+            }
+            return new ResponseEntity<>(objects, HttpStatus.OK);
 
-            // // get all the documents that have been shared with the user
-            // List<DocumentPermission> permissions = dpr.findByUser(user.getId());
-
-            // for (DocumentPermission permission : permissions) {
-            // Document document =
-            // documentRepository.findById(permission.getDocument()).get();
-            // documents.add(document);
-            // }
-
-            // System.out.println(documents);
-
-            // return new ResponseEntity<>(documents, HttpStatus.OK);
-
+        } catch (JwtException e) {
+            System.out.println("JWT Exception: " + e.getMessage());
+            return new ResponseEntity<>(HttpStatus.UNAUTHORIZED);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            System.out.println("Internal Server Error: " + e.getMessage());
             return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
         } finally {
             System.out.println("Finally Block.");
         }
     }
 
+}
+
+// Define a simple class representing your object
+class DocumentResponse {
+    private String title;
+    private PermissionType permissionType;
+    private Long ownerId;
+
+    public DocumentResponse(Long ownerId, String title) {
+        this.title = title;
+        // this.permissionType = permissionType;
+        this.ownerId = ownerId;
+    }
+
+    public Long getOwnerId() {
+        return ownerId;
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setOwnerId(Long ownerId) {
+        this.ownerId = ownerId;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 }

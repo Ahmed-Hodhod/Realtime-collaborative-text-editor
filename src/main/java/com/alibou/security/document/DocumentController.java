@@ -37,10 +37,8 @@ import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
 
-
-@RestController
 @CrossOrigin(origins = "http://localhost:3000")
-
+@RestController
 @RequestMapping("/api")
 public class DocumentController {
 
@@ -90,7 +88,6 @@ public class DocumentController {
             System.out.println("Finally Block.");
         }
     }
-
     @PostMapping("/document/{documentId}/share")
     public ResponseEntity<String> ShareDocument(HttpServletRequest request, @RequestBody ShareRequest shareRequest,
             @PathVariable Long documentId) {

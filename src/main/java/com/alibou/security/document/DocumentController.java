@@ -53,6 +53,7 @@ public class DocumentController {
 
     @Value("${application.security.jwt.secret-key}")
     private String secret;
+
     @CrossOrigin(origins = "http://localhost:3000")
 
     @PostMapping("/documents")
@@ -88,12 +89,13 @@ public class DocumentController {
             System.out.println("Finally Block.");
         }
     }
+
     @PostMapping("/document/{documentId}/share")
     public ResponseEntity<String> ShareDocument(HttpServletRequest request, @RequestBody ShareRequest shareRequest,
             @PathVariable Long documentId) {
         try {
 
-            Long userId = shareRequest.getUserId();
+            String userEmail = shareRequest.getUserEmail();
             PermissionType permissionType = PermissionType.valueOf(shareRequest.getPermissionType());
 
             // get the currently logged in user
@@ -109,7 +111,7 @@ public class DocumentController {
             User user = userOptional.get();
 
             // check the validity of both the document and the user you are sharing with
-            Optional<User> sharingWithUserOptional = userRepository.findById(userId);
+            Optional<User> sharingWithUserOptional = userRepository.findByEmail(userEmail); // findById(userId);
             Optional<Document> documentOptional = documentRepository.findById(documentId);
 
             if (!sharingWithUserOptional.isPresent() || !documentOptional.isPresent()) {
@@ -132,7 +134,8 @@ public class DocumentController {
             }
 
             // check if the permission entry already exists and in this case update it only
-            Optional<DocumentPermission> permissionOptional = dpr.findById(new CompositeKey(documentId, userId));
+            Optional<DocumentPermission> permissionOptional = dpr
+                    .findById(new CompositeKey(documentId, sharingWithUser.getId()));
 
             if (permissionOptional.isPresent()) {
                 DocumentPermission permission = permissionOptional.get();
@@ -148,9 +151,9 @@ public class DocumentController {
             // create a new permission entry and save it
             DocumentPermission newPermission = new DocumentPermission();
             newPermission.setDocument(documentId);
-            newPermission.setUser(userId);
+            newPermission.setUser(sharingWithUser.getId());
 
-            CompositeKey id = new CompositeKey(documentId, userId);
+            CompositeKey id = new CompositeKey(documentId, sharingWithUser.getId());
             newPermission.setId(id);
             newPermission.setPermissionType(permissionType);
 

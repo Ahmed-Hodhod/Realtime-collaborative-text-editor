@@ -10,7 +10,8 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 public class ShareRequest {
-  private Long userId;
+  // private Long userId;
+  private String userEmail;
   // private Long documentId;
   private String permissionType;
 }

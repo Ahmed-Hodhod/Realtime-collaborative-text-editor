@@ -11,7 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.io.IOException;
-@CrossOrigin(origins = "http://localhost:3000")
+@CrossOrigin(origins = "*") // Allow requests from any origin
+
 
 @RestController
 @RequestMapping("/api/v1/auth")

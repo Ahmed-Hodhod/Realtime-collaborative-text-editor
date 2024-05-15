@@ -36,8 +36,8 @@ import org.springframework.data.crossstore.ChangeSetPersister.NotFoundException;
 import jakarta.persistence.EntityManager;
 import jakarta.servlet.http.HttpServletRequest;
 import java.security.Key;
+@CrossOrigin(origins = "*") // Allow requests from any origin
 
-@CrossOrigin(origins = "http://localhost:3000")
 @RestController
 @RequestMapping("/api")
 public class DocumentController {
